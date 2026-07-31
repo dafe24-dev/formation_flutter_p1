@@ -23,7 +23,7 @@ Une application Flutter permettant de gérer une liste de contacts de manière s
 ### Accueil
 
 <p align="center">
-  <img src="screenshots/contact_pro/4.png**" width="250">
+  <img src="screenshots/contact_pro/4.png" width="250">
 </p>
 
 ---
@@ -101,16 +101,16 @@ flutter run
 
 1. Cliquez sur le bouton **Code** en haut de la page GitHub.
 2. Sélectionnez **Download ZIP**.
-<p align="left">
-  <img src="screenshots/contact_pro/download zip.png" width="250">
-</p>
 3. Décompressez l'archive sur votre ordinateur.
 4. Ouvrez le dossier du projet dans **Visual Studio Code** ou **Android Studio**.
 5. Exécutez les commandes suivantes :
-
+<p align="left">
+  <img src="screenshots/contact_pro/download zip.png" width="250">
+</p>
 ```bash
 flutter pub get
 flutter run
+```
 
 ## 🛠️ Technologies utilisées
 
