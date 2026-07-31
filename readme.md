@@ -68,6 +68,10 @@ lib/
 
 ## 🚀 Installation
 
+Vous pouvez récupérer ce projet de deux façons.
+
+### Option 1 : Cloner le dépôt Git
+
 ### 1. Cloner le projet
 
 ```bash
@@ -93,6 +97,20 @@ flutter run
 ```
 
 ---
+### Option 2 : Télécharger le projet au format ZIP
+
+1. Cliquez sur le bouton **Code** en haut de la page GitHub.
+2. Sélectionnez **Download ZIP**.
+<p align="left">
+  <img src="screenshots/contact_pro/download zip.png" width="250">
+</p>
+3. Décompressez l'archive sur votre ordinateur.
+4. Ouvrez le dossier du projet dans **Visual Studio Code** ou **Android Studio**.
+5. Exécutez les commandes suivantes :
+
+```bash
+flutter pub get
+flutter run
 
 ## 🛠️ Technologies utilisées
 
