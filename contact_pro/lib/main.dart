@@ -1,3 +1,4 @@
+import 'package:contact_pro/pages/login_page.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -7,15 +8,18 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
+      title: 'Contacts App',
       theme: ThemeData(
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        scaffoldBackgroundColor: const Color(0xFFF4F5F7),
+        fontFamily: 'Roboto',
+        
       ),
-      home: const Placeholder()
+      home: const LoginPage()
     );
   }
 }
+
