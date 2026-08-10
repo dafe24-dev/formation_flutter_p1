@@ -1,7 +1,14 @@
 import 'package:contact_pro/pages/login_page.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() {
+Future<void> main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const MyApp());
 }
 
@@ -14,12 +21,12 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Contacts App',
       theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFFF4F5F7),
+        scaffoldBackgroundColor:  Colors.white,
         fontFamily: 'Roboto',
-        
       ),
-      home: const LoginPage()
+      home: const LoginPage(),
     );
   }
 }
+
 

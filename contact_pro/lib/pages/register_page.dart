@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -19,7 +20,8 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _telephoneController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   @override
   void dispose() {
@@ -32,8 +34,7 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
-  void _register() {
-    
+  Future<void> _register() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -48,15 +49,44 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-   
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Compte créé avec succès'),
-        backgroundColor: Colors.green,
-      ),
-    );
+    try {
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _usernameController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+      Navigator.pop(context);
 
-    Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Compte créé avec succès.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      String message = 'Une erreur est survenue. Veuillez réessayer.';
+
+      if (e.code == 'email-already-in-use') {
+        message = 'Cet e-mail est déjà utilisé.';
+      } else if (e.code == 'weak-password') {
+        message = 'Le mot de passe est trop faible.';
+      } else if (e.code == 'invalid-email') {
+        message = 'L’adresse e-mail est invalide.';
+      } 
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Une erreur est survenue. Veuillez réessayer.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -79,7 +109,6 @@ class _RegisterPageState extends State<RegisterPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 const Text(
                   'Créer un compte',
                   style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
@@ -101,10 +130,9 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 const SizedBox(height: 20),
 
-               
                 Center(
                   child: Image.asset(
-                    'assets/image.jpeg',
+                    'assets/image.png',
                     height: 180,
                     errorBuilder: (context, error, stackTrace) =>
                         const Icon(Icons.image, size: 120, color: Colors.grey),
@@ -112,7 +140,6 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 const SizedBox(height: 20),
 
-                
                 _buildTextField(
                   controller: _prenomController,
                   icon: Icons.person_outline,
@@ -221,7 +248,6 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 const SizedBox(height: 15),
 
-
                 Row(
                   children: [
                     Checkbox(
@@ -262,7 +288,6 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 const SizedBox(height: 10),
 
-                
                 SizedBox(
                   width: double.infinity,
                   height: 52,
@@ -286,7 +311,6 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 const SizedBox(height: 20),
 
-                
                 Row(
                   children: [
                     Expanded(child: Divider(color: Colors.grey[300])),
@@ -299,7 +323,6 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 const SizedBox(height: 20),
 
-
                 SizedBox(
                   width: double.infinity,
                   height: 52,
@@ -310,37 +333,36 @@ class _RegisterPageState extends State<RegisterPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                  onPressed: () {},
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Image.asset(
-          'assets/google.jpeg',
-          height: 22,
-          width: 22,
-          errorBuilder: (context, error, stackTrace) =>
-              const Icon(Icons.g_mobiledata, size: 24),
-        ),
-        const SizedBox(width: 12),
-        const Flexible(
-          child: Text(
-            'Continuer avec Google',
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    ),
-  ),
-),
+                    onPressed: () {},
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset(
+                          'assets/google.jpeg',
+                          height: 22,
+                          width: 22,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(Icons.g_mobiledata, size: 24),
+                        ),
+                        const SizedBox(width: 12),
+                        const Flexible(
+                          child: Text(
+                            'Continuer avec Google',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 30),
 
-                
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

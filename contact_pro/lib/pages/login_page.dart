@@ -1,5 +1,7 @@
+import 'package:contact_pro/pages/barre_navigation.dart';
 import 'package:contact_pro/pages/register_page.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -23,17 +25,54 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _login() {
+  Future<void> _login() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Connecté avec succès'),
-        backgroundColor: Colors.green,
-      ),
-    );
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _usernameController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Connexion réussie.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => BarreNavigation()),
+      );
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found' ||
+          e.code == 'wrong-password' ||
+          e.code == 'invalid-credential') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('E-mail ou mot de passe incorrect.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Une erreur est survenue. Veuillez réessayer.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Une erreur est survenue. Veuillez réessayer.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -50,7 +89,7 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 Center(
                   child: Image.asset(
-                    'assets/image.jpeg',
+                    'assets/image.png',
                     height: 220,
                     errorBuilder: (context, error, stackTrace) =>
                         const Icon(Icons.image, size: 150, color: Colors.grey),
@@ -58,7 +97,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 20),
 
-              
                 const Text(
                   'Bienvenue sur',
                   style: TextStyle(
@@ -82,7 +120,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 30),
 
-                
                 TextFormField(
                   controller: _usernameController,
                   validator: (value) {
@@ -106,17 +143,22 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.red, width: 1.5),
+                      borderSide: const BorderSide(
+                        color: Colors.red,
+                        width: 1.5,
+                      ),
                     ),
                     focusedErrorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.red, width: 1.5),
+                      borderSide: const BorderSide(
+                        color: Colors.red,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 15),
 
-              
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
@@ -154,17 +196,22 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.red, width: 1.5),
+                      borderSide: const BorderSide(
+                        color: Colors.red,
+                        width: 1.5,
+                      ),
                     ),
                     focusedErrorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.red, width: 1.5),
+                      borderSide: const BorderSide(
+                        color: Colors.red,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 10),
 
-                
                 Align(
                   alignment: Alignment.centerLeft,
                   child: TextButton(
@@ -202,7 +249,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 20),
 
-               
                 Row(
                   children: [
                     Expanded(child: Divider(color: Colors.grey[300])),
@@ -215,7 +261,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 20),
 
-
                 SizedBox(
                   width: double.infinity,
                   height: 52,
@@ -226,36 +271,35 @@ class _LoginPageState extends State<LoginPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                   onPressed: () {},
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Image.asset(
-        "assets/google.jpeg",
-          height: 22,
-          width: 22,
-          errorBuilder: (context, error, stackTrace) =>
-              const Icon(Icons.g_mobiledata, size: 24),
-        ),
-        const SizedBox(width: 12),
-        const Flexible(
-          child: Text(
-            'Continuer avec Google',
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    ),
-  ),
-),
+                    onPressed: () {},
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset(
+                          "assets/google.jpeg",
+                          height: 22,
+                          width: 22,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(Icons.g_mobiledata, size: 24),
+                        ),
+                        const SizedBox(width: 12),
+                        const Flexible(
+                          child: Text(
+                            'Continuer avec Google',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 30),
-
 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -267,9 +311,7 @@ class _LoginPageState extends State<LoginPage> {
                     GestureDetector(
                       onTap: () => Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => const RegisterPage(),
-                        ),
+                        MaterialPageRoute(builder: (_) => const RegisterPage()),
                       ),
                       child: const Text(
                         'S\'inscrire',
