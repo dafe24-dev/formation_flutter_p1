@@ -1,56 +1,173 @@
-import 'package:contact_pro/pages/detail_contact_page.dart';
-import 'package:contact_pro/widgets/drawer.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class HomePage extends StatefulWidget {
+  HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  String name =  "";
+  List<Map<String, dynamic>> recentContacts = [];
+  int totalContacts = 0;
+  int totalCategories = 0;
+  int totalFavoris = 0;
+  int ajoutsRecents = 0;
+  bool isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    getUser();
+  }
+
+  Future<void> getRecentContacts() async {
+    // Récupérer l'utilisateur connecté
+    final user = FirebaseAuth.instance.currentUser;
+
+    // Si aucun utilisateur n'est connecté
+    if (user == null) return;
+
+    try {
+      // Récupérer les 3 contacts les plus récents
+      final snapshot = await FirebaseFirestore.instance
+          .collection('contacts')
+          .where('userId', isEqualTo: user.uid)
+          .orderBy(
+            'createdAt',
+            descending: true,
+          ) // Du plus récent au plus ancien
+          .limit(3) // Limiter à 3 contacts
+          .get();
+
+      // Créer une liste vide qui contiendra les contacts récents
+      List<Map<String, dynamic>> contacts = [];
+
+      // Parcourir tous les documents récupérés depuis Firestore
+      for (var doc in snapshot.docs) {
+        // Récupérer les données du document
+        final data = doc.data();
+
+        // Ajouter un nouveau contact dans la liste
+        contacts.add({
+          'id': doc.id,
+          'nom': '${data['prenom']} ${data['nom']}',
+          'telephone': data['telephone'] ?? '',
+        });
+      }
+
+      // Retourner la liste des contacts
+      setState(() {
+        recentContacts = contacts;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Une erreur est survenue. Veuillez réessayer.')),
+      );
+    }
+  }
+
+  Future<void> getStats() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      // 1. Nombre total de contacts
+      final contactsSnapshot = await FirebaseFirestore.instance
+          .collection('contacts')
+          .where('userId', isEqualTo: user.uid)
+          .get();
+
+      // 2. Nombre total de catégories
+      final categoriesSnapshot = await FirebaseFirestore.instance
+          .collection('categories')
+          .where('userId', isEqualTo: user.uid)
+          .get();
+
+      // 3. Nombre de favoris
+      final favorisSnapshot = await FirebaseFirestore.instance
+          .collection('contacts')
+          .where('userId', isEqualTo: user.uid)
+          .where('estFavorite', isEqualTo: true)
+          .get();
+
+      // 4. Nombre des contacts ajoutés aujourd’hui
+      final aujourdHui = DateTime.now();
+      final debutJour = DateTime(
+        aujourdHui.year,
+        aujourdHui.month,
+        aujourdHui.day,
+      );
+
+      final recentsSnapshot = await FirebaseFirestore.instance
+          .collection('contacts')
+          .where('userId', isEqualTo: user.uid)
+          .where(
+            'createdAt',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(debutJour),
+          )
+          .get();
+
+      if (!mounted) return;
+
+      setState(() {
+        totalContacts = contactsSnapshot.docs.length;
+        totalCategories = categoriesSnapshot.docs.length;
+        totalFavoris = favorisSnapshot.docs.length;
+        ajoutsRecents = recentsSnapshot.docs.length;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Erreur lors du chargement des statistiques'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+  
+  Future<void> getUser() async{
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null){
+       final doc = await FirebaseFirestore.instance
+        .collection('utilisateur')
+        .doc(user.uid)
+        .get();
+        if(doc.exists){
+          setState(() {
+            name = doc.data()?['nom'];
+          });
+        }
+    }
+
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // 👉 Ajout de l’AppBar ici
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        // leading: IconButton(
-        //   icon: const Icon(Icons.menu, color: Colors.black),
-        //   onPressed: () {
-        //     // Action du menu
-        //     Navigator.push(
-        //       context,
-        //       MaterialPageRoute(
-        //         builder: (_) => const PageCategories(),
-        //       ),
-        //     );
-        //   },
-        // ),
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.account_circle,
-              color: Colors.black,
-              size: 30,
-            ),
-            onPressed: () {
-              // Action du profil
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ContactDetailsPage()),
-              );
-            },
-          ),
-        ],
-      ),
-      drawer: MyDrawer(),
-      body: SafeArea(
+    return SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(18, 14, 18, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 👉 Texte de bienvenue
-              const Text(
-                'Bonjour, Emma 👋',
+              Text(
+                'Bonjour, $name 👋',
                 style: TextStyle(
                   fontSize: 25,
                   fontWeight: FontWeight.bold,
@@ -81,29 +198,29 @@ class HomePage extends StatelessWidget {
                     const NeverScrollableScrollPhysics(), // 👉 Évite un double scroll
                 childAspectRatio:
                     2, // 🔥 rapport largeur/hauteur (2.5 = rectangle horizontal)
-                children: const [
+                children:  [
                   // 👉 Chaque élément est un conteneur individuel (StatTile)
                   StatTile(
                     title: "Contacts",
-                    number: "248",
+                    number: "$totalContacts",
                     color: Colors.deepPurple,
                     icon: Icons.person,
                   ),
                   StatTile(
                     title: "Catégories",
-                    number: "12",
+                    number: "$totalCategories",
                     color: Colors.green,
                     icon: Icons.list,
                   ),
                   StatTile(
                     title: "Favoris",
-                    number: "36",
+                    number: "$totalFavoris",
                     color: Colors.pink,
                     icon: Icons.favorite,
                   ),
                   StatTile(
                     title: "Ajouts récents",
-                    number: "18",
+                    number: "$ajoutsRecents",
                     color: Colors.blue,
                     icon: Icons.access_time,
                   ),
@@ -143,15 +260,18 @@ class HomePage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12), // 👉 coins arrondis
                 ),
                 child: Column(
-                  children: const [
-                    ContactTile(name: "Lucas Bernard", phone: "06 98 76 54 32"),
-                    Divider(
-                      height: 1,
-                      color: Colors.grey,
-                    ), // 👉 trait de séparation
-                    ContactTile(name: "Sophie Martin", phone: "06 45 67 89 01"),
-                    Divider(height: 1, color: Colors.grey),
-                    ContactTile(name: "David Leroy", phone: "07 88 99 00 11"),
+                  children: [
+                    // Parcourir la liste des contacts
+                    for (int i = 0; i < recentContacts.length; i++) ...[
+                      ContactTile(
+                        name: recentContacts[i]['nom'],
+                        phone: recentContacts[i]['telephone'],
+                      ),
+
+                      // Afficher un Divider sauf après le dernier contact
+                      if (i != recentContacts.length - 1)
+                        const Divider(height: 1, color: Colors.grey),
+                    ],
                   ],
                 ),
               ),
@@ -209,9 +329,8 @@ class HomePage extends StatelessWidget {
             ],
           ),
         ),
-      )
-    );
-  }
+      );  
+    }
 }
 
 // WIDGET INDIVIDUEL POUR CHAQUE RECTANGLE

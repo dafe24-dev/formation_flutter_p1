@@ -14,7 +14,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
 
   final _formKey = GlobalKey<FormState>();
-
+  bool isLoading = false;
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -29,7 +29,9 @@ class _LoginPageState extends State<LoginPage> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-
+     setState(() {
+      isLoading = true;
+    });
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _usernameController.text.trim(),
@@ -72,6 +74,13 @@ class _LoginPageState extends State<LoginPage> {
           backgroundColor: Colors.red,
         ),
       );
+    }finally {
+      // Ce bloc est exécuté dans tous les cas
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -89,7 +98,7 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 Center(
                   child: Image.asset(
-                    'assets/image.png',
+                    'assets/images/image.png',
                     height: 220,
                     errorBuilder: (context, error, stackTrace) =>
                         const Icon(Icons.image, size: 150, color: Colors.grey),
@@ -236,8 +245,8 @@ class _LoginPageState extends State<LoginPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: _login,
-                    child: const Text(
+                    onPressed: isLoading ? null : _login,
+                    child: isLoading ? const Center(child: CircularProgressIndicator()) : Text(
                       'Se connecter',
                       style: TextStyle(
                         fontSize: 16,
@@ -277,7 +286,7 @@ class _LoginPageState extends State<LoginPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Image.asset(
-                          "assets/google.jpeg",
+                          "assets/images/google.jpeg",
                           height: 22,
                           width: 22,
                           errorBuilder: (context, error, stackTrace) =>

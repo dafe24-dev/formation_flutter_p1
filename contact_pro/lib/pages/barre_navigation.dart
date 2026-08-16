@@ -1,11 +1,9 @@
-// import 'package:contact_pro/pages/detail_contact_page.dart';
 import 'package:contact_pro/pages/categorie_page.dart';
 import 'package:contact_pro/pages/contact_page.dart';
 import 'package:contact_pro/pages/favoris_page.dart';
 import 'package:contact_pro/pages/home_page.dart';
-import 'package:contact_pro/pages/nouveau_contact_page.dart';
-// import 'package:contact_pro/widgets/barreNav.dart';
-import 'package:contact_pro/widgets/drawer.dart';
+import 'package:contact_pro/pages/login_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class BarreNavigation extends StatefulWidget {
@@ -17,7 +15,30 @@ class BarreNavigation extends StatefulWidget {
 
 class _CustomBottomNavBarScreenState extends State<BarreNavigation> {
   int _selectedIndex = 0; // "Contacts" est sélectionné sur l'image
-  final List _pages = [HomePage(), ContactPage(), FavorisPage(), PageCategories()];
+  final List _pages = [
+    HomePage(),
+    ContactPage(),
+    FavorisPage(),
+    PageCategories(),
+  ];
+  String email = '';
+  String nom = 'Utilisateur';
+  @override
+  void initState() {
+    super.initState();
+    getUserInfo();
+  }
+
+  Future<void> getUserInfo() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    if (!mounted) return;
+
+    setState(() {
+      email = user.email ?? "";
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,33 +46,147 @@ class _CustomBottomNavBarScreenState extends State<BarreNavigation> {
     const Color unselectedColor = Color(0xFF707070);
 
     return Scaffold(
-      drawer: MyDrawer(),
-      body: _pages[_selectedIndex],
-      floatingActionButton: Container(
-        margin: EdgeInsets.only(top: 100),
-        height: 55,
-        width: 55,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: const LinearGradient(
-            colors: [Color(0xFF6B4EFF), Color(0xFF4C22FF)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: FloatingActionButton(
-          elevation: 0.1,
-          backgroundColor: Colors.transparent,
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: ((context) => NouveauContact())),
-            );
-          },
-          child: const Icon(Icons.add, size: 35, color: Colors.white),
+      drawer: Drawer(
+        child: Column(
+          children: [
+            // =========================
+            // En-tête du drawer
+            // =========================
+            UserAccountsDrawerHeader(
+              currentAccountPicture: const CircleAvatar(
+                backgroundColor: Colors.white,
+                child: Icon(Icons.person, size: 40, color: Colors.deepPurple),
+              ),
+              accountName: Text(nom),
+              accountEmail: Text(email),
+              decoration: const BoxDecoration(color: Colors.deepPurple),
+            ),
+
+            // =========================
+            // Accueil
+            // =========================
+            ListTile(
+              leading: const Icon(Icons.home_outlined),
+              title: const Text('Accueil'),
+              onTap: () {
+                Navigator.pop(context);
+                setState(() {
+                  _selectedIndex = 0;
+                });
+              },
+            ),
+
+            // =========================
+            // Contacts
+            // =========================
+            ListTile(
+              leading: const Icon(Icons.contacts_outlined),
+              title: const Text('Tous les contacts'),
+              onTap: () {
+                Navigator.pop(context);
+                setState(() {
+                  _selectedIndex = 1;
+                });
+              },
+            ),
+
+            // =========================
+            // Favoris
+            // =========================
+            ListTile(
+              leading: const Icon(Icons.favorite_border),
+              title: const Text('Favoris'),
+              onTap: () {
+                Navigator.pop(context);
+                setState(() {
+                  _selectedIndex = 2;
+                });
+              },
+            ),
+
+            // =========================
+            // Catégories
+            // =========================
+            ListTile(
+              leading: const Icon(Icons.folder_outlined),
+              title: const Text('Catégories'),
+              onTap: () {
+                Navigator.pop(context);
+                setState(() {
+                  _selectedIndex = 3;
+                });
+              },
+            ),
+
+            const Divider(),
+
+            // =========================
+            // À propos
+            // =========================
+            ListTile(
+              leading: const Icon(Icons.info_outline),
+              title: const Text('À propos'),
+              onTap: () {
+                Navigator.pop(context);
+
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: const Text('À propos de Contact Pro'),
+                      content: const Text(
+                        'Contact Pro est une application de gestion de contacts '
+                        'développée avec Flutter et Firebase. Elle permet '
+                        'd’ajouter, modifier, supprimer, rechercher et organiser '
+                        'les contacts par catégories, tout en gérant les favoris '
+                        'et les informations personnelles de chaque utilisateur.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Fermer'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+
+            const Spacer(),
+
+            // =========================
+            // Déconnexion
+            // =========================
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text(
+                'Se déconnecter',
+                style: TextStyle(color: Colors.red),
+              ),
+              onTap: () async {
+                Navigator.pop(context);
+
+                await FirebaseAuth.instance.signOut();
+
+                // if (!context.mounted) return;
+
+                // Navigator.pushReplacement(
+                //   context,
+                //   MaterialPageRoute(builder: (_) => const LoginPage()),
+                // );
+              },
+            ),
+
+            const SizedBox(height: 16),
+          ],
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      body: _pages[_selectedIndex],
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        title: Text(_getTitle()),
+      ),
       bottomNavigationBar: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         decoration: BoxDecoration(
@@ -68,9 +203,9 @@ class _CustomBottomNavBarScreenState extends State<BarreNavigation> {
         child: BottomAppBar(
           color: Colors.transparent,
           elevation: 0,
-          shape:
-              const CircularNotchedRectangle(), // Si vous souhaitez une encoche sous le bouton (optionnel)
-          notchMargin: 8.0,
+          // shape:
+          // const CircularNotchedRectangle(), // Si vous souhaitez une encoche sous le bouton (optionnel)
+          // notchMargin: 8.0,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 5.0),
             child: Row(
@@ -78,7 +213,7 @@ class _CustomBottomNavBarScreenState extends State<BarreNavigation> {
               children: [
                 // Onglet 1: Accueil
                 _buildNavItem(
-                  icon: Icons.home_outlined,
+                  icon: Icons.home,
                   label: 'Accueil',
                   index: 0,
                   primaryColor: primaryColor,
@@ -94,11 +229,11 @@ class _CustomBottomNavBarScreenState extends State<BarreNavigation> {
                 ),
 
                 // Espace réservé pour le FloatingActionButton central
-                const SizedBox(width: 64),
+                // const SizedBox(width: 64),
 
                 // Onglet 3: Favoris
                 _buildNavItem(
-                  icon: Icons.favorite_border_rounded,
+                  icon: Icons.favorite,
                   label: 'Favoris',
                   index: 2,
                   primaryColor: primaryColor,
@@ -152,5 +287,20 @@ class _CustomBottomNavBarScreenState extends State<BarreNavigation> {
         ],
       ),
     );
+  }
+
+  String _getTitle() {
+    switch (_selectedIndex) {
+      case 0:
+        return 'Accueil';
+      case 1:
+        return 'Contacts';
+      case 2:
+        return 'Favoris';
+      case 3:
+        return 'Catégories';
+      default:
+        return '';
+    }
   }
 }

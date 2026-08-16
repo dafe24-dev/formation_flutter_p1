@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -20,8 +21,9 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _telephoneController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  bool isLoading = false;
+
 
   @override
   void dispose() {
@@ -48,12 +50,26 @@ class _RegisterPageState extends State<RegisterPage> {
       );
       return;
     }
-
+    setState(() {
+      isLoading = true;
+    });
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _usernameController.text.trim(),
         password: _passwordController.text.trim(),
       );
+
+      await FirebaseFirestore.instance
+       .collection('utilisateur')
+       .doc(userCredential.user!.uid)
+       .set({
+        'nom': _nomController.text,
+        'prenom': _prenomController.text,
+        'num_telephone' : _telephoneController.text
+       });
+
+      if (!mounted) return;
+
       Navigator.pop(context);
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -63,6 +79,8 @@ class _RegisterPageState extends State<RegisterPage> {
         ),
       );
     } on FirebaseAuthException catch (e) {
+            print('$e');
+
       String message = 'Une erreur est survenue. Veuillez réessayer.';
 
       if (e.code == 'email-already-in-use') {
@@ -79,13 +97,18 @@ class _RegisterPageState extends State<RegisterPage> {
           backgroundColor: Colors.red,
         ),
       );
-    } catch (_) {
+    } catch (e) {
+      print('$e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Une erreur est survenue. Veuillez réessayer.'),
           backgroundColor: Colors.red,
         ),
       );
+    }finally{
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -132,7 +155,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                 Center(
                   child: Image.asset(
-                    'assets/image.png',
+                    'assets/images/image.png',
                     height: 180,
                     errorBuilder: (context, error, stackTrace) =>
                         const Icon(Icons.image, size: 120, color: Colors.grey),
@@ -298,8 +321,10 @@ class _RegisterPageState extends State<RegisterPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: _register,
-                    child: const Text(
+                    onPressed: isLoading ? null : _register,
+                    child: 
+                    isLoading ? CircularProgressIndicator() :
+                    Text(
                       'S\'inscrire',
                       style: TextStyle(
                         fontSize: 16,
@@ -339,7 +364,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Image.asset(
-                          'assets/google.jpeg',
+                          'assets/images/google.jpeg',
                           height: 22,
                           width: 22,
                           errorBuilder: (context, error, stackTrace) =>
